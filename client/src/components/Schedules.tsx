@@ -14,91 +14,91 @@ import {
   Loader
 } from 'semantic-ui-react'
 
-import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
+import { createSchedule, deleteSchedule, getSchedules, patchSchedule } from '../api/schedules-api'
 import Auth from '../auth/Auth'
-import { Todo } from '../types/Todo'
+import { Schedule } from '../types/Schedule'
 import '../App.css'
 
-interface TodosProps {
+interface SchedulesProps {
   auth: Auth
   history: History
 }
 
-interface TodosState {
-  todos: Todo[]
-  newTodoName: string
-  loadingTodos: boolean
+interface SchedulesState {
+  schedules: Schedule[]
+  newScheduleName: string
+  loadingSchedules: boolean
 }
 
-export class Todos extends React.PureComponent<TodosProps, TodosState> {
-  state: TodosState = {
-    todos: [],
-    newTodoName: '',
-    loadingTodos: true
+export class Schedules extends React.PureComponent<SchedulesProps, SchedulesState> {
+  state: SchedulesState = {
+    schedules: [],
+    newScheduleName: '',
+    loadingSchedules: true
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newTodoName: event.target.value })
+    this.setState({ newScheduleName: event.target.value })
   }
 
-  onEditButtonClick = (todoId: string) => {
-    this.props.history.push(`/todos/${todoId}/edit`)
+  onEditButtonClick = (scheduleId: string) => {
+    this.props.history.push(`/schedules/${scheduleId}/edit`)
   }
 
-  onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+  onScheduleCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
       const dueDate = this.calculateDueDate()
-      const newTodo = await createTodo(this.props.auth.getIdToken(), {
-        name: this.state.newTodoName,
+      const newSchedule = await createSchedule(this.props.auth.getIdToken(), {
+        name: this.state.newScheduleName,
         dueDate
       })
       this.setState({
-        todos: [...this.state.todos, newTodo],
-        newTodoName: ''
+        schedules: [...this.state.schedules, newSchedule],
+        newScheduleName: ''
       })
     } catch {
-      alert('Todo creation failed')
+      alert('Schedule creation failed')
     }
   }
 
-  onTodoDelete = async (todoId: string) => {
+  onScheduleDelete = async (scheduleId: string) => {
     try {
-      await deleteTodo(this.props.auth.getIdToken(), todoId)
+      await deleteSchedule(this.props.auth.getIdToken(), scheduleId)
       this.setState({
-        todos: this.state.todos.filter(todo => todo.todoId != todoId)
+        schedules: this.state.schedules.filter(schedule => schedule.scheduleId != scheduleId)
       })
     } catch {
-      alert('Todo deletion failed')
+      alert('Schedule deletion failed')
     }
   }
 
-  onTodoCheck = async (pos: number) => {
+  onScheduleCheck = async (pos: number) => {
     try {
-      const todo = this.state.todos[pos]
-      await patchTodo(this.props.auth.getIdToken(), todo.todoId, {
-        name: todo.name,
-        dueDate: todo.dueDate,
-        done: !todo.done
+      const schedule = this.state.schedules[pos]
+      await patchSchedule(this.props.auth.getIdToken(), schedule.scheduleId, {
+        name: schedule.name,
+        dueDate: schedule.dueDate,
+        done: !schedule.done
       })
       this.setState({
-        todos: update(this.state.todos, {
-          [pos]: { done: { $set: !todo.done } }
+        schedules: update(this.state.schedules, {
+          [pos]: { done: { $set: !schedule.done } }
         })
       })
     } catch {
-      alert('Todo deletion failed')
+      alert('Schedule deletion failed')
     }
   }
 
   async componentDidMount() {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken())
+      const schedules = await getSchedules(this.props.auth.getIdToken())
       this.setState({
-        todos,
-        loadingTodos: false
+        schedules,
+        loadingSchedules: false
       })
     } catch (e) {
-      alert(`Failed to fetch todos: ${e.message}`)
+      alert(`Failed to fetch schedules: ${e.message}`)
     }
   }
 
@@ -107,14 +107,14 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       <div>
         <Header as="h1" className="intro">Here is what is on your Schedule</Header>
 
-        {this.renderCreateTodoInput()}
+        {this.renderCreateScheduleInput()}
 
-        {this.renderTodos()}
+        {this.renderSchedules()}
       </div>
     )
   }
 
-  renderCreateTodoInput() {
+  renderCreateScheduleInput() {
     return (
       <Grid.Row>
         <Grid.Column width={16}>
@@ -124,7 +124,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
               labelPosition: 'left',
               icon: 'add',
               content: 'Add new',
-              onClick: this.onTodoCreate
+              onClick: this.onScheduleCreate
             }}
             fluid
             actionPosition="left"
@@ -139,47 +139,47 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     )
   }
 
-  renderTodos() {
-    if (this.state.loadingTodos) {
+  renderSchedules() {
+    if (this.state.loadingSchedules) {
       return this.renderLoading()
     }
 
-    return this.renderTodosList()
+    return this.renderSchedulesList()
   }
 
   renderLoading() {
     return (
       <Grid.Row>
         <Loader indeterminate active inline="centered">
-          Loading TODOs
+          Loading SCHEDULEs
         </Loader>
       </Grid.Row>
     )
   }
 
-  renderTodosList() {
+  renderSchedulesList() {
     return (
       <Grid padded>
-        {this.state.todos.map((todo, pos) => {
+        {this.state.schedules.map((schedule, pos) => {
           return (
-            <Grid.Row key={todo.todoId}>
+            <Grid.Row key={schedule.scheduleId}>
               <Grid.Column width={1} verticalAlign="middle">
                 <Checkbox
-                  onChange={() => this.onTodoCheck(pos)}
-                  checked={todo.done}
+                  onChange={() => this.onScheduleCheck(pos)}
+                  checked={schedule.done}
                 />
               </Grid.Column>
               <Grid.Column width={10} verticalAlign="middle">
-                {todo.name}
+                {schedule.name}
               </Grid.Column>
               <Grid.Column width={3} floated="right">
-                {todo.dueDate}
+                {schedule.dueDate}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
                 <Button
                   icon
                   color="blue"
-                  onClick={() => this.onEditButtonClick(todo.todoId)}
+                  onClick={() => this.onEditButtonClick(schedule.scheduleId)}
                 >
                   <Icon name="pencil" />
                 </Button>
@@ -188,13 +188,13 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 <Button
                   icon
                   color="red"
-                  onClick={() => this.onTodoDelete(todo.todoId)}
+                  onClick={() => this.onScheduleDelete(schedule.scheduleId)}
                 >
                   <Icon name="delete" />
                 </Button>
               </Grid.Column>
-              {todo.attachmentUrl && (
-                <Image src={todo.attachmentUrl} size="small" wrapped />
+              {schedule.attachmentUrl && (
+                <Image src={schedule.attachmentUrl} size="small" wrapped />
               )}
               <Grid.Column width={16}>
                 <Divider />

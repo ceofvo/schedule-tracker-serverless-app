@@ -7,25 +7,25 @@ const logger = createLogger('datalayer');
 
 const XAWS = AWSXRay.captureAWS(AWS)
 
-import { TodoItem } from '../models/TodoItem'
-import { TodoUpdate } from '../models/TodoUpdate'
+import { ScheduleItem } from '../models/ScheduleItem'
+import { ScheduleUpdate } from '../models/ScheduleUpdate'
 
-export class TodoAccess {
+export class ScheduleAccess {
 
   constructor(
     private readonly docClient: DocumentClient = createDynamoDBClient(),
     private readonly S3 = createS3Bucket(),
-    private readonly todosTable = process.env.TODOS_TABLE,
-    private readonly indexName = process.env.TODOS_TABLE_INDEX,
-    private readonly bucketName = process.env.TODOS_S3_BUCKET,
+    private readonly schedulesTable = process.env.SCHEDULES_TABLE,
+    private readonly indexName = process.env.SCHEDULES_TABLE_INDEX,
+    private readonly bucketName = process.env.SCHEDULES_S3_BUCKET,
     private readonly urlExpiration = process.env.SIGNED_URL_EXPIRATION) {
   }
 
-  async getAllTodos(userId: string): Promise<TodoItem[]> {
-    console.log('Getting all Todes')
+  async getAllSchedules(userId: string): Promise<ScheduleItem[]> {
+    console.log('Getting all Schedules')
 
     const result = await this.docClient.query({
-        TableName: this.todosTable,
+        TableName: this.schedulesTable,
         IndexName: this.indexName,
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: {
@@ -35,43 +35,43 @@ export class TodoAccess {
         err?logger.info("Query failed", err):logger.info('Query succeeded', data);
         }).promise();
         const items = result.Items
-        return items as TodoItem[]
+        return items as ScheduleItem[]
     }
 
-  async createTodo(todo: TodoItem): Promise<TodoItem> {
+  async createSchedule(schedule: ScheduleItem): Promise<ScheduleItem> {
     await this.docClient.put({
-      TableName: this.todosTable,
-      Item: todo
+      TableName: this.schedulesTable,
+      Item: schedule
     }, (err, data) => {
       err?logger.info("Insertion failed", err):logger.info('Insertion succeeded', data);
     }).promise();
 
-    return todo
+    return schedule
   }
 
 
-  async deleteTodo(todoId: string, userId: string) {
+  async deleteSchedule(scheduleId: string, userId: string) {
   	await this.docClient.delete({
-  		TableName: this.todosTable,
-      Key: {userId, todoId}
+  		TableName: this.schedulesTable,
+      Key: {userId, scheduleId}
   	}, (err, data) => {
-      err?logger.info("Deletion failed", err):logger.info('Deleteion succeeded', data);
+      err?logger.info("Deletion failed", err):logger.info('Deletion succeeded', data);
     }).promise();
   	return {};
   }
 
 
-  async updateTodo(userId: string, todoId: string, updatedTodo: TodoUpdate) {
+  async updateSchedule(userId: string, scheduleId: string, updatedSchedule: ScheduleUpdate) {
     
     await this.docClient.update({
-    TableName:this.todosTable,
-    Key:{ userId, todoId},
+    TableName:this.schedulesTable,
+    Key:{ userId, scheduleId},
     ExpressionAttributeNames: {"#N": "name"},
-    UpdateExpression: "set #N=:todoName, dueDate=:dueDate, done=:done",
+    UpdateExpression: "set #N=:scheduleName, dueDate=:dueDate, done=:done",
     ExpressionAttributeValues:{
-        ":todoName": updatedTodo.name,
-        ":dueDate": updatedTodo.dueDate,
-        ":done": updatedTodo.done
+        ":scheduleName": updatedSchedule.name,
+        ":dueDate": updatedSchedule.dueDate,
+        ":done": updatedSchedule.done
     },
     ReturnValues:"UPDATED_NEW"
     }, (err, data) => {
@@ -81,15 +81,15 @@ export class TodoAccess {
   }
 
 
-  async generateUploadUrl(todoId: string, userId: string): Promise<string>{
+  async generateUploadUrl(scheduleId: string, userId: string): Promise<string>{
      const uploadUrl = this.S3.getSignedUrl('putObject', {
        Bucket: this.bucketName,
-       Key: todoId,
+       Key: scheduleId,
        Expires: this.urlExpiration
      })
      await this.docClient.update({
-      TableName:this.todosTable,
-      Key:{ userId, todoId},
+      TableName:this.schedulesTable,
+      Key:{ userId, scheduleId},
       UpdateExpression: "set attachmentUrl=:URL",
       ExpressionAttributeValues:{
           ":URL": uploadUrl.split("?")[0]
