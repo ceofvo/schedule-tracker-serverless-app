@@ -63,6 +63,11 @@ functions:
         Action:
           - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SCHEDULES_TABLE}/index/${self:provider.environment.SCHEDULES_TABLE_INDEX}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+        Resource: 
+          - '*'
 
   CreateSchedule:
     handler: src/lambda/http/createSchedule.handler
@@ -81,6 +86,11 @@ functions:
         Action:
           - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SCHEDULES_TABLE}
+      - Effect: Allow    
+        Action:
+          - xray:PutTraceSegments
+        Resource: 
+          - '*'
 
   UpdateSchedule:
     handler: src/lambda/http/updateSchedule.handler
@@ -99,6 +109,11 @@ functions:
         Action:
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SCHEDULES_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+        Resource: 
+          - '*'
 
   DeleteSchedule:
     handler: src/lambda/http/deleteSchedule.handler
@@ -114,6 +129,11 @@ functions:
         Action:
           - dynamodb:DeleteItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SCHEDULES_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+        Resource: 
+          - '*'
 
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
@@ -134,6 +154,11 @@ functions:
         Action:
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SCHEDULES_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+        Resource: 
+          - '*'
 
 resources:
   Resources:
