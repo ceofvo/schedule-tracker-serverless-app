@@ -57,7 +57,7 @@ export class Schedules extends React.PureComponent<SchedulesProps, SchedulesStat
         newScheduleName: ''
       })
     } catch {
-      alert('Schedule creation failed')
+      alert('Schedule creation failed. Please add a schedule item.')
     }
   }
 
